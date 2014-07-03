@@ -442,8 +442,6 @@ void apply_brightness_value(long int dim_value) {
         if (brightness_path == NULL)
             brightness_path = find_file_in_path("/sys/class/leds/lm3533-lcd-bl-1", "brightness", 0, 0);
         if (brightness_path == NULL)
-            brightness_path = find_file_in_path("/sys/class/leds/lm3533-lcd-bl-2", "brightness", 0, 0);
-        if (brightness_path == NULL)
             brightness_path = find_file_in_path("/sys/class/leds/lcd-backlight_1", "brightness", 0, 0);
         if (brightness_path == NULL)
             brightness_path = find_file_in_path("/sys/class/leds/lcd-backlight_2", "brightness", 0, 0);
@@ -503,7 +501,20 @@ void apply_brightness_value(long int dim_value) {
     }
 
     fprintf(file, "%ld\n", dim_value);
-    fclose(file);    
+    fclose(file);
+
+    // Xperia ZL has a weird thing... this should fix that...
+    if (strcmp(libtouch_flags.brightness_sys_file, "/sys/class/leds/lm3533-lcd-bl-1/brightness") == 1 &&
+	find_file_in_path("/sys/class/leds/lm3533-lcd-bl-2", "brightness", 0, 0) != NULL) {
+	    FILE *file = fopen("/sys/class/leds/lm3533-lcd-bl-2/brightness", "w");
+	    if (file == NULL) {
+	        LOGE("Unable to create brightness sys file!\n");
+	        return;
+	    }
+
+	    fprintf(file, "%ld\n", dim_value);
+	    fclose(file);
+    }
 }
 
 static void toggle_brightness() {
