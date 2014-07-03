@@ -115,7 +115,7 @@ struct CWMSettingsIntValues wait_after_install = { "wait_after_install", 1 };
 struct CWMSettingsLongIntValues t_zone = { "t_zone", 0 };
 struct CWMSettingsLongIntValues t_zone_offset = { "t_zone_offset", 0 };
 struct CWMSettingsIntValues use_dst_time = { "use_dst_time", 0 };
-struct CWMSettingsIntValues use_qcom_time_data_files = { "use_qcom_time_data_files", 1 };
+struct CWMSettingsIntValues use_qcom_time_data_files = { "use_qcom_time_data_files", 0 };
 struct CWMSettingsIntValues use_qcom_time_daemon = { "use_qcom_time_daemon", 0 };
 struct CWMSettingsLongIntValues use_qcom_time_offset = { "use_qcom_time_offset", 0 };
 
@@ -440,6 +440,18 @@ void apply_brightness_value(long int dim_value) {
         // no file was defined during compile and we have none in settings file
         // try to search for it in pre-defined paths. If we find one, we save it to settings for next boot
         char* brightness_path = find_file_in_path("/sys/class/backlight", "brightness", 0, 0);
+        if (brightness_path == NULL)
+            brightness_path = find_file_in_path("/sys/class/leds/wled:backlight", "brightness", 0, 0);
+        if (brightness_path == NULL)
+            brightness_path = find_file_in_path("/sys/class/leds/lm3533-lcd-bl", "brightness", 0, 0);
+        if (brightness_path == NULL)
+            brightness_path = find_file_in_path("/sys/class/leds/lm3533-lcd-bl-1", "brightness", 0, 0);
+        if (brightness_path == NULL)
+            brightness_path = find_file_in_path("/sys/class/leds/lm3533-lcd-bl-2", "brightness", 0, 0);
+        if (brightness_path == NULL)
+            brightness_path = find_file_in_path("/sys/class/leds/lcd-backlight_1", "brightness", 0, 0);
+        if (brightness_path == NULL)
+            brightness_path = find_file_in_path("/sys/class/leds/lcd-backlight_2", "brightness", 0, 0);
         if (brightness_path == NULL)
             brightness_path = find_file_in_path("/sys/class/leds/lcd-backlight", "brightness", 0, 0);
         if (brightness_path != NULL) {
@@ -832,7 +844,7 @@ static void apply_qcom_time_daemon_fixes(int on_start) {
         else
             use_qcom_time_daemon.value = 0;
 
-        read_config_file(PHILZ_SETTINGS_FILE, use_qcom_time_data_files.key, value, "0");
+        read_config_file(PHILZ_SETTINGS_FILE, use_qcom_time_data_files.key, value, "1");
         if (strcmp(value, "1") == 0 || strcmp(value, "true") == 0)
             use_qcom_time_data_files.value = 1;
         else
