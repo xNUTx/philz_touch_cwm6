@@ -940,7 +940,7 @@ else ifeq ($(TARGET_PRODUCT), cm_huashan)
     KERNEL_EXFAT_MODULE_NAME := "texfat"
     TARGET_SCREEN_HEIGHT := 1280
     TARGET_SCREEN_WIDTH := 720
-    BRIGHTNESS_SYS_FILE := "/sys/class/leds/lcd-backlight1/brightness"
+    BRIGHTNESS_SYS_FILE := "/sys/class/leds/lcd-backlight_1/brightness"
 
 #Sony Xperia T (mint)
 else ifeq ($(TARGET_PRODUCT), cm_mint)

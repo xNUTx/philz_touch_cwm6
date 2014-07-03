@@ -117,7 +117,7 @@ struct CWMSettingsLongIntValues t_zone_offset = { "t_zone_offset", 0 };
 struct CWMSettingsIntValues use_dst_time = { "use_dst_time", 0 };
 struct CWMSettingsIntValues use_qcom_time_data_files = { "use_qcom_time_data_files", 0 };
 struct CWMSettingsIntValues use_qcom_time_daemon = { "use_qcom_time_daemon", 0 };
-struct CWMSettingsLongIntValues use_qcom_time_offset = { "use_qcom_time_offset", 1 };
+struct CWMSettingsLongIntValues use_qcom_time_offset = { "use_qcom_time_offset", 0 };
 
 //----- End initialize touch recovery key/value settings
 
@@ -431,12 +431,7 @@ void apply_brightness_value(long int dim_value) {
         strcpy(libtouch_flags.brightness_sys_file, brightness_user_path.value);
     }
 
-    // Test if the brightness path exists
-    struct stat s;
-    int fchkerr = stat(libtouch_flags.brightness_sys_file, &s);
-
-    // trigger this if the path is unavailable too...
-    if (strcmp(libtouch_flags.brightness_sys_file, "no_file") == 0 || errno == ENOENT) {
+    if (strcmp(libtouch_flags.brightness_sys_file, "no_file") == 0) {
         // no file was defined during compile and we have none in settings file
         // try to search for it in pre-defined paths. If we find one, we save it to settings for next boot
         char* brightness_path = find_file_in_path("/sys/class/backlight", "brightness", 0, 0);
