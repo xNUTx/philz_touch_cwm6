@@ -289,7 +289,7 @@ int show_install_update_menu() {
             else
                 show_choose_zip_menu(last_path_used);
         } else if (chosen_item == FIXED_TOP_INSTALL_ZIP_MENUS + num_extra_volumes + 2) {
-            apply_from_adb();
+            enter_sideload_mode(INSTALL_SUCCESS);
         } else if (chosen_item == FIXED_TOP_INSTALL_ZIP_MENUS + num_extra_volumes + 3) {
             show_multi_flash_menu();
         } else if (chosen_item == FIXED_TOP_INSTALL_ZIP_MENUS + num_extra_volumes + 4) {
@@ -1846,7 +1846,7 @@ int show_advanced_menu() {
                 break;
             }
             case 1:
-                handle_failure(1);
+                handle_failure();
                 break;
             case 2: {
                 ui_print("Outputting key codes.\n");
@@ -2017,9 +2017,7 @@ void process_volumes() {
     return;
 }
 
-void handle_failure(int ret) {
-    if (ret == 0)
-        return;
+void handle_failure() {
     if (0 != ensure_path_mounted(get_primary_storage_path()))
         return;
     mkdir("/sdcard/clockworkmod", S_IRWXU | S_IRWXG | S_IRWXO);
