@@ -431,12 +431,7 @@ void apply_brightness_value(long int dim_value) {
         strcpy(libtouch_flags.brightness_sys_file, brightness_user_path.value);
     }
 
-    // Test if the brightness path exists
-    struct stat s;
-    int fchkerr = stat(libtouch_flags.brightness_sys_file, &s);
-
-    // trigger this if the path is unavailable too...
-    if (strcmp(libtouch_flags.brightness_sys_file, "no_file") == 0 || errno == ENOENT) {
+    if (strcmp(libtouch_flags.brightness_sys_file, "no_file") == 0) {
         // no file was defined during compile and we have none in settings file
         // try to search for it in pre-defined paths. If we find one, we save it to settings for next boot
         char* brightness_path = find_file_in_path("/sys/class/backlight", "brightness", 0, 0);
