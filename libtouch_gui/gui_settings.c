@@ -714,15 +714,6 @@ static void parse_t_daemon_data_files() {
     struct timeval tv;
     struct dirent *dt;
 
-    // Don't fix the time of it already is over year 2000, it is likely already okay, either
-    // because the RTC is fine or because the recovery already set it and then crashed
-    gettimeofday(&tv, NULL);
-    if (tv.tv_sec > 946684800) {
-        // timestamp of 2000-01-01 00:00:00
-        LOGE("parse_t_daemon_data_files: time already okay (after year 2000).\n");
-        return;
-    }
-
     // on start, /data will be unmounted by refresh_recovery_settings()
     if (ensure_path_mounted("/data") != 0) {
         LOGE("parse_t_daemon_data_files: failed to mount /data\n");
