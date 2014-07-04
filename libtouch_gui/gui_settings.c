@@ -431,25 +431,31 @@ void apply_brightness_value(long int dim_value) {
         strcpy(libtouch_flags.brightness_sys_file, brightness_user_path.value);
     }
 
-    if (strcmp(libtouch_flags.brightness_sys_file, "no_file") == 0) {
+    // Test if the brightness path exists
+    struct stat s;
+    int fchkerr = stat(libtouch_flags.brightness_sys_file, &s);
+
+    // trigger this if the path is unavailable too...
+    if (strcmp(libtouch_flags.brightness_sys_file, "no_file") == 0 || errno == ENOENT) {
         // no file was defined during compile and we have none in settings file
         // try to search for it in pre-defined paths. If we find one, we save it to settings for next boot
         char* brightness_path = find_file_in_path("/sys/class/backlight", "brightness", 0, 0);
-        if (brightness_path == NULL)
+        if (brightness_path == NULL) {
             brightness_path = find_file_in_path("/sys/class/leds/wled:backlight", "brightness", 0, 0);
-        if (brightness_path == NULL)
+        } else if (brightness_path == NULL) {
             brightness_path = find_file_in_path("/sys/class/leds/lm3533-lcd-bl", "brightness", 0, 0);
-        if (brightness_path == NULL)
+        } else if (brightness_path == NULL) {
             brightness_path = find_file_in_path("/sys/class/leds/lm3533-lcd-bl-1", "brightness", 0, 0);
-        if (brightness_path == NULL)
+        } else if (brightness_path == NULL) {
             brightness_path = find_file_in_path("/sys/class/leds/lcd-backlight_1", "brightness", 0, 0);
-        if (brightness_path == NULL)
+        } else if (brightness_path == NULL) {
             brightness_path = find_file_in_path("/sys/class/leds/lcd-backlight_2", "brightness", 0, 0);
-        if (brightness_path == NULL)
+        } else if (brightness_path == NULL) {
             brightness_path = find_file_in_path("/sys/class/leds/lcd-backlight", "brightness", 0, 0);
+	}
         if (brightness_path != NULL) {
             strcpy(libtouch_flags.brightness_sys_file, brightness_path);
-            snprintf(brightness_user_path.value, sizeof(brightness_user_path.value), "%s", brightness_path);
+            sprintf(brightness_user_path.value, sizeof(brightness_user_path.value), "%s", brightness_path);
             write_config_file(PHILZ_SETTINGS_FILE, brightness_user_path.key, brightness_user_path.value);
             free(brightness_path);
         } else {
