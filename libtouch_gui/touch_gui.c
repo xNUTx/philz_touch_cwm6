@@ -224,7 +224,7 @@ int ui_showing_progress_bar() {
 
 //kanged this vibrate stuff from teamwin (thanks guys!)
 #define VIBRATOR_TIMEOUT_FILE    "/sys/class/timed_output/vibrator/enable"
-#define VIBRATOR_TIME_MS    62
+#define VIBRATOR_TIME_MS    25
 int vibrate_device(int timeout_ms) {
     char str[20];
     int fd;
@@ -998,7 +998,7 @@ void ui_refresh_display_state(int *screen_timeout) {
 
         // refresh clock and battery display if screen is not blanked
         // if text is not visible, no need to refresh clock/time (password prompt start up screen)
-        if (!is_blanked && ui_text_visible()) {
+        if (!is_blanked && ui_IsTextVisible()) {
             pthread_mutex_lock(&gUpdateMutex);
             update_screen_locked();
             pthread_mutex_unlock(&gUpdateMutex);
