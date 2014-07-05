@@ -224,7 +224,7 @@ int ui_showing_progress_bar() {
 
 //kanged this vibrate stuff from teamwin (thanks guys!)
 #define VIBRATOR_TIMEOUT_FILE    "/sys/class/timed_output/vibrator/enable"
-#define VIBRATOR_TIME_MS    25
+#define VIBRATOR_TIME_MS    62
 int vibrate_device(int timeout_ms) {
     char str[20];
     int fd;

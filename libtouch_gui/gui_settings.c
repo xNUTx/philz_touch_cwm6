@@ -430,15 +430,31 @@ void apply_brightness_value(long int dim_value) {
         strcpy(libtouch_flags.brightness_sys_file, brightness_user_path.value);
     }
 
-    if (strcmp(libtouch_flags.brightness_sys_file, "no_file") == 0) {
+// Test if the brightness path exists
+    struct stat s;
+    int fchkerr = stat(libtouch_flags.brightness_sys_file, &s);
+
+    // trigger this if the path is unavailable too...
+    if (strcmp(libtouch_flags.brightness_sys_file, "no_file") == 0 || errno == ENOENT) {
         // no file was defined during compile and we have none in settings file
         // try to search for it in pre-defined paths. If we find one, we save it to settings for next boot
         char* brightness_path = find_file_in_path("/sys/class/backlight", "brightness", 0, 0);
-        if (brightness_path == NULL)
+        if (brightness_path == NULL) {
+            brightness_path = find_file_in_path("/sys/class/leds/wled:backlight", "brightness", 0, 0);
+        } else if (brightness_path == NULL) {
+            brightness_path = find_file_in_path("/sys/class/leds/lm3533-lcd-bl", "brightness", 0, 0);
+        } else if (brightness_path == NULL) {
+            brightness_path = find_file_in_path("/sys/class/leds/lm3533-lcd-bl-1", "brightness", 0, 0);
+        } else if (brightness_path == NULL) {
+            brightness_path = find_file_in_path("/sys/class/leds/lcd-backlight_1", "brightness", 0, 0);
+        } else if (brightness_path == NULL) {
+            brightness_path = find_file_in_path("/sys/class/leds/lcd-backlight_2", "brightness", 0, 0);
+        } else if (brightness_path == NULL) {
             brightness_path = find_file_in_path("/sys/class/leds/lcd-backlight", "brightness", 0, 0);
+}
         if (brightness_path != NULL) {
             strcpy(libtouch_flags.brightness_sys_file, brightness_path);
-            snprintf(brightness_user_path.value, sizeof(brightness_user_path.value), "%s", brightness_path);
+            sprintf(brightness_user_path.value, sizeof(brightness_user_path.value), "%s", brightness_path);
             write_config_file(PHILZ_SETTINGS_FILE, brightness_user_path.key, brightness_user_path.value);
             free(brightness_path);
         } else {
@@ -490,9 +506,22 @@ void apply_brightness_value(long int dim_value) {
     }
 
     fprintf(file, "%ld\n", dim_value);
-    fclose(file);    
-}
+    fclose(file);
 
+    // Xperia ZL has a weird thing... this should fix that...
+    if (strcmp(libtouch_flags.brightness_sys_file, "/sys/class/leds/lm3533-lcd-bl-1/brightness") == 1 &&
+        find_file_in_path("/sys/class/leds/lm3533-lcd-bl-2", "brightness", 0, 0) != NULL) {
+            FILE *file = fopen("/sys/class/leds/lm3533-lcd-bl-2/brightness", "w");
+            if (file == NULL) {
+                LOGE("Unable to create brightness sys file!\n");
+                return;
+            }
+
+            fprintf(file, "%ld\n", dim_value);
+            fclose(file);
+    }
+}
+      
 static void toggle_brightness() {
     char value[10];
     if (set_brightness.value >= max_brightness_value) {
@@ -689,16 +718,7 @@ static void parse_t_daemon_data_files() {
     uint64_t offset = 0;
     struct timeval tv;
     struct dirent *dt;
-
-    // Don't fix the time of it already is over year 2000, it is likely already okay, either
-    // because the RTC is fine or because the recovery already set it and then crashed
-    gettimeofday(&tv, NULL);
-    if (tv.tv_sec > 946684800) {
-        // timestamp of 2000-01-01 00:00:00
-        LOGE("parse_t_daemon_data_files: time already okay (after year 2000).\n");
-        return;
-    }
-
+    
     // on start, /data will be unmounted by refresh_recovery_settings()
     if (ensure_path_mounted("/data") != 0) {
         LOGE("parse_t_daemon_data_files: failed to mount /data\n");

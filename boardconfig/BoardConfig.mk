@@ -889,15 +889,39 @@ else ifeq ($(TARGET_PRODUCT), cm_yuga)
 #Sony Xperia Z1 (honami)
 else ifeq ($(TARGET_PRODUCT), cm_honami)
     TARGET_COMMON_NAME := Xperia Z1
-    #KERNEL_EXFAT_MODULE_NAME := "texfat"
+    KERNEL_EXFAT_MODULE_NAME := "texfat"
     TARGET_SCREEN_HEIGHT := 1920
     TARGET_SCREEN_WIDTH := 1080
     BRIGHTNESS_SYS_FILE := "/sys/class/leds/wled:backlight/brightness"
 
+#Sony Xperia Z2 (sirius)
+else ifeq ($(TARGET_PRODUCT), cm_sirius)
+    TARGET_COMMON_NAME := Xperia Z2
+    KERNEL_EXFAT_MODULE_NAME := "texfat"
+    TARGET_SCREEN_HEIGHT := 1920
+    TARGET_SCREEN_WIDTH := 1080
+    BRIGHTNESS_SYS_FILE := "/sys/class/leds/wled:backlight/brightness"
+
+#Sony Xperia Tablet Z2 (castor)
+else ifeq ($(TARGET_PRODUCT), cm_castor)
+    TARGET_COMMON_NAME := Xperia Tablet Z2
+    KERNEL_EXFAT_MODULE_NAME := "texfat"
+    TARGET_SCREEN_HEIGHT := 1200
+    TARGET_SCREEN_WIDTH := 1920
+    BRIGHTNESS_SYS_FILE := "/sys/class/leds/lcd-backlight/brightness"
+
+#Sony Xperia Tablet Z2 LTE (castor_windy)
+else ifeq ($(TARGET_PRODUCT), cm_castor_windy)
+    TARGET_COMMON_NAME := Xperia Tablet Z2 LTE
+    KERNEL_EXFAT_MODULE_NAME := "texfat"
+    TARGET_SCREEN_HEIGHT := 1200
+    TARGET_SCREEN_WIDTH := 1920
+    BRIGHTNESS_SYS_FILE := "/sys/class/leds/lcd-backlight/brightness"
+
 #Sony Xperia ZU (togari)
 else ifeq ($(TARGET_PRODUCT), cm_togari)
     TARGET_COMMON_NAME := Xperia ZU
-    #KERNEL_EXFAT_MODULE_NAME := "texfat"
+    KERNEL_EXFAT_MODULE_NAME := "texfat"
     TARGET_SCREEN_HEIGHT := 1920
     TARGET_SCREEN_WIDTH := 1080
     BRIGHTNESS_SYS_FILE := "/sys/class/leds/wled:backlight/brightness"
@@ -905,15 +929,47 @@ else ifeq ($(TARGET_PRODUCT), cm_togari)
 #Sony Xperia S (nozomi)
 else ifeq ($(TARGET_PRODUCT), cm_nozomi)
     TARGET_COMMON_NAME := Xperia S
-    #KERNEL_EXFAT_MODULE_NAME := "texfat"
+    KERNEL_EXFAT_MODULE_NAME := "texfat"
     TARGET_SCREEN_HEIGHT := 1280
     TARGET_SCREEN_WIDTH := 720
+    BRIGHTNESS_SYS_FILE := "/sys/class/leds/lcd-backlight/brightness"
+
+#Sony Xperia L (taoshan)
+else ifeq ($(TARGET_PRODUCT), cm_taoshan)
+    TARGET_COMMON_NAME := Xperia L
+    KERNEL_EXFAT_MODULE_NAME := "texfat"
+    TARGET_SCREEN_HEIGHT := 854
+    TARGET_SCREEN_WIDTH := 480
+    BRIGHTNESS_SYS_FILE := "/sys/class/leds/lcd-backlight/brightness"
+
+#Sony Xperia P (nypon)
+else ifeq ($(TARGET_PRODUCT), cm_nypon)
+    TARGET_COMMON_NAME := Xperia P
+    KERNEL_EXFAT_MODULE_NAME := "texfat"
+    TARGET_SCREEN_HEIGHT := 1280
+    TARGET_SCREEN_WIDTH := 720
+    BRIGHTNESS_SYS_FILE := "/sys/class/leds/lcd-backlight/brightness"
+
+#Sony Xperia J (jlo)
+else ifeq ($(TARGET_PRODUCT), cm_jlo)
+    TARGET_COMMON_NAME := Xperia J
+    KERNEL_EXFAT_MODULE_NAME := "texfat"
+    TARGET_SCREEN_HEIGHT := 854
+    TARGET_SCREEN_WIDTH := 480
+    BRIGHTNESS_SYS_FILE := "/sys/class/leds/lcd-backlight/brightness"
+
+#Sony Xperia M (nicki)
+else ifeq ($(TARGET_PRODUCT), cm_nicki)
+    TARGET_COMMON_NAME := Xperia M
+    KERNEL_EXFAT_MODULE_NAME := "texfat"
+    TARGET_SCREEN_HEIGHT := 854
+    TARGET_SCREEN_WIDTH := 480
     BRIGHTNESS_SYS_FILE := "/sys/class/leds/lcd-backlight/brightness"
 
 #Sony Xperia SP (huashan)
 else ifeq ($(TARGET_PRODUCT), cm_huashan)
     TARGET_COMMON_NAME := Xperia SP
-    #KERNEL_EXFAT_MODULE_NAME := "texfat"
+    KERNEL_EXFAT_MODULE_NAME := "texfat"
     TARGET_SCREEN_HEIGHT := 1280
     TARGET_SCREEN_WIDTH := 720
     BRIGHTNESS_SYS_FILE := "/sys/class/leds/lcd-backlight1/brightness"
@@ -921,7 +977,7 @@ else ifeq ($(TARGET_PRODUCT), cm_huashan)
 #Sony Xperia T (mint)
 else ifeq ($(TARGET_PRODUCT), cm_mint)
     TARGET_COMMON_NAME := Xperia T
-    #KERNEL_EXFAT_MODULE_NAME := "texfat"
+    KERNEL_EXFAT_MODULE_NAME := "texfat"
     TARGET_SCREEN_HEIGHT := 1280
     TARGET_SCREEN_WIDTH := 720
     BRIGHTNESS_SYS_FILE := "/sys/class/leds/lcd-backlight_1/brightness"
@@ -937,7 +993,7 @@ else ifeq ($(TARGET_PRODUCT), cm_odin)
 #Sony Xperia ZR (dogo)
 else ifeq ($(TARGET_PRODUCT), cm_dogo)
     TARGET_COMMON_NAME := Xperia ZR
-    #KERNEL_EXFAT_MODULE_NAME := "texfat"
+    KERNEL_EXFAT_MODULE_NAME := "texfat"
     TARGET_SCREEN_HEIGHT := 1280
     TARGET_SCREEN_WIDTH := 720
     BRIGHTNESS_SYS_FILE := "/sys/class/leds/lm3533-lcd-bl/brightness"
@@ -945,7 +1001,15 @@ else ifeq ($(TARGET_PRODUCT), cm_dogo)
 #Sony Xperia Tablet Z (pollux)
 else ifeq ($(TARGET_PRODUCT), cm_pollux)
     TARGET_COMMON_NAME := Xperia Tablet Z
-    #KERNEL_EXFAT_MODULE_NAME := "texfat"
+    KERNEL_EXFAT_MODULE_NAME := "texfat"
+    TARGET_SCREEN_HEIGHT := 1200
+    TARGET_SCREEN_WIDTH := 1920
+    BRIGHTNESS_SYS_FILE := "/sys/devices/i2c-0/0-002c/backlight/lcd-backlight/brightness"
+
+#Sony Xperia Tablet Z LTE (pollux_windy)
+else ifeq ($(TARGET_PRODUCT), cm_pollux_windy)
+    TARGET_COMMON_NAME := Xperia Tablet Z LTE
+    KERNEL_EXFAT_MODULE_NAME := "texfat"
     TARGET_SCREEN_HEIGHT := 1200
     TARGET_SCREEN_WIDTH := 1920
     BRIGHTNESS_SYS_FILE := "/sys/devices/i2c-0/0-002c/backlight/lcd-backlight/brightness"
@@ -953,7 +1017,7 @@ else ifeq ($(TARGET_PRODUCT), cm_pollux)
 #Sony Xperia Z1 Compact (amami)
 else ifeq ($(TARGET_PRODUCT), cm_amami)
     TARGET_COMMON_NAME := Xperia Z1 Compact
-    #KERNEL_EXFAT_MODULE_NAME := "texfat"
+    KERNEL_EXFAT_MODULE_NAME := "texfat"
     TARGET_SCREEN_HEIGHT := 1280
     TARGET_SCREEN_WIDTH := 720
     BRIGHTNESS_SYS_FILE := "/sys/class/leds/wled:backlight/brightness"
