@@ -49,7 +49,6 @@
 #include "bootloader.h"
 #include "common.h"
 #include "cutils/properties.h"
-#include "firmware.h"
 #include "install.h"
 #include "make_ext4fs.h"
 #include "minui/minui.h"
@@ -431,7 +430,7 @@ void apply_brightness_value(long int dim_value) {
         strcpy(libtouch_flags.brightness_sys_file, brightness_user_path.value);
     }
 
-    // Test if the brightness path exists
+// Test if the brightness path exists
     struct stat s;
     int fchkerr = stat(libtouch_flags.brightness_sys_file, &s);
 
@@ -452,7 +451,7 @@ void apply_brightness_value(long int dim_value) {
             brightness_path = find_file_in_path("/sys/class/leds/lcd-backlight_2", "brightness", 0, 0);
         } else if (brightness_path == NULL) {
             brightness_path = find_file_in_path("/sys/class/leds/lcd-backlight", "brightness", 0, 0);
-	}
+}
         if (brightness_path != NULL) {
             strcpy(libtouch_flags.brightness_sys_file, brightness_path);
             sprintf(brightness_user_path.value, sizeof(brightness_user_path.value), "%s", brightness_path);
@@ -511,18 +510,18 @@ void apply_brightness_value(long int dim_value) {
 
     // Xperia ZL has a weird thing... this should fix that...
     if (strcmp(libtouch_flags.brightness_sys_file, "/sys/class/leds/lm3533-lcd-bl-1/brightness") == 1 &&
-	find_file_in_path("/sys/class/leds/lm3533-lcd-bl-2", "brightness", 0, 0) != NULL) {
-	    FILE *file = fopen("/sys/class/leds/lm3533-lcd-bl-2/brightness", "w");
-	    if (file == NULL) {
-	        LOGE("Unable to create brightness sys file!\n");
-	        return;
-	    }
+        find_file_in_path("/sys/class/leds/lm3533-lcd-bl-2", "brightness", 0, 0) != NULL) {
+            FILE *file = fopen("/sys/class/leds/lm3533-lcd-bl-2/brightness", "w");
+            if (file == NULL) {
+                LOGE("Unable to create brightness sys file!\n");
+                return;
+            }
 
-	    fprintf(file, "%ld\n", dim_value);
-	    fclose(file);
+            fprintf(file, "%ld\n", dim_value);
+            fclose(file);
     }
 }
-
+      
 static void toggle_brightness() {
     char value[10];
     if (set_brightness.value >= max_brightness_value) {
@@ -719,7 +718,7 @@ static void parse_t_daemon_data_files() {
     uint64_t offset = 0;
     struct timeval tv;
     struct dirent *dt;
-
+    
     // on start, /data will be unmounted by refresh_recovery_settings()
     if (ensure_path_mounted("/data") != 0) {
         LOGE("parse_t_daemon_data_files: failed to mount /data\n");
@@ -847,7 +846,7 @@ static void apply_qcom_time_daemon_fixes(int on_start) {
         else
             use_qcom_time_daemon.value = 0;
 
-        read_config_file(PHILZ_SETTINGS_FILE, use_qcom_time_data_files.key, value, "1");
+        read_config_file(PHILZ_SETTINGS_FILE, use_qcom_time_data_files.key, value, "0");
         if (strcmp(value, "1") == 0 || strcmp(value, "true") == 0)
             use_qcom_time_data_files.value = 1;
         else
@@ -2862,9 +2861,9 @@ static void recovery_change_passkey() {
     char pass_string[128] = "";
     int i = 0;
     int key_match = 1;
-    ui_set_show_text(0);
 
     // type in new passkey
+    ui_SetShowText(false);
     ui_clear_key_queue();
     for (i = 0; i < RECOVERY_LOCK_MAX_CHARS; ++i) {
         char tmp[64];
@@ -2916,7 +2915,7 @@ static void recovery_change_passkey() {
         ui_print("Recovery Lock is enabled\n");
     }
 
-    ui_set_show_text(1);
+    ui_SetShowText(true);
 }
 
 // check if recovery needs to be locked and prompt for a pass key if it is defined
@@ -2950,8 +2949,8 @@ void check_recovery_lock() {
 
     // hide screen menus and ui_print
     // this function can be called on recovery start (show_text == 0) or from menus (show_text == 1) to lock recovery or reset password
-    int visible = ui_text_visible();
-    ui_set_show_text(0);
+    bool visible = ui_IsTextVisible();
+    ui_SetShowText(false);
 
     // parse the password: "key1,key2,key3,key4..."
     int i = 0;
@@ -2979,10 +2978,10 @@ void check_recovery_lock() {
     char pass_display[128] = "";
     char trials_left_message[64];
 
-    // don't allow pass if key file was tempered with
-    // this will only allow passwords of RECOVERY_LOCK_MAX_CHARS characters
     if (pass_chars != RECOVERY_LOCK_MAX_CHARS) {
-        LOGE("unusual passkey length (%d)\n", pass_chars);
+        // don't allow pass if key file was tempered with
+        // this will only allow passwords of RECOVERY_LOCK_MAX_CHARS characters
+        LOGI("unusual passkey length (%d)\n", pass_chars);
         key_err = RECOVERY_LOCK_MAX_ERROR;
     }
 
@@ -3049,7 +3048,7 @@ void check_recovery_lock() {
 
     // unlock and continue
     LOGI("Recovery unlocked\n");
-    ui_set_show_text(visible);
+    ui_SetShowText(visible);
     property_set("sys.usb.recovery_lock", "0");
 }
 

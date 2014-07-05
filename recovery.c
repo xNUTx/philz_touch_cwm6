@@ -29,7 +29,6 @@
 #include <sys/types.h>
 #include <time.h>
 #include <unistd.h>
-#include <sys/stat.h>
 
 #include "bootloader.h"
 #include "common.h"
@@ -41,18 +40,17 @@
 #include "roots.h"
 #include "recovery_ui.h"
 
+#include "voldclient/voldclient.h"
+
 #include "adb_install.h"
 #include "minadbd/adb.h"
+#include "recovery_cmds.h"
 
-#include "firmware.h"
 #include "extendedcommands.h"
 #include "recovery_settings.h"
 #include "advanced_functions.h"
-#include "flashutils/flashutils.h"
-#include "dedupe/dedupe.h"
-#include "voldclient/voldclient.h"
 
-#include "recovery_cmds.h"
+struct selabel_handle *sehandle;
 
 #ifdef PHILZ_TOUCH_RECOVERY
 #include "libtouch_gui/gui_settings.h"
@@ -60,13 +58,12 @@
 
 int no_wipe_confirm = 0; // 0 == script is not ors_boot_script, confirm on wipe
 
-struct selabel_handle *sehandle = NULL;
-
 static const struct option OPTIONS[] = {
   { "send_intent", required_argument, NULL, 's' },
   { "update_package", required_argument, NULL, 'u' },
   { "wipe_data", no_argument, NULL, 'w' },
   { "wipe_cache", no_argument, NULL, 'c' },
+  { "wipe_media", no_argument, NULL, 'm' },
   { "show_text", no_argument, NULL, 't' },
   { "just_exit", no_argument, NULL, 'x' },
   { "sideload", no_argument, NULL, 'a' },
@@ -197,10 +194,8 @@ get_args(int *argc, char ***argv) {
         LOGI("Boot status: %.*s\n", (int)sizeof(boot.status), boot.status);
     }
 
-    struct stat file_info;
-
     // --- if arguments weren't supplied, look in the bootloader control block
-    if (*argc <= 1 && 0 != stat("/tmp/.ignorebootmessage", &file_info)) {
+    if (*argc <= 1 && !file_found("/tmp/.ignorebootmessage")) {
         boot.recovery[sizeof(boot.recovery) - 1] = '\0';  // Ensure termination
         const char *arg = strtok(boot.recovery, "\n");
         if (arg != NULL && !strcmp(arg, "recovery")) {
@@ -572,16 +567,15 @@ get_menu_selection(const char** headers, char** items, int menu_only,
 
     while (chosen_item < 0 && chosen_item != GO_BACK) {
         int key = ui_wait_key();
-        int visible = ui_text_visible();
+        int visible = ui_IsTextVisible();
 
-        if (key == -1) {   // ui_wait_key() timed out
-            if (ui_text_ever_visible()) {
-                continue;
-            } else {
-                LOGI("timed out waiting for key input; rebooting.\n");
-                ui_end_menu();
-                return ITEM_REBOOT;
-            }
+        if (key == -1) {   // ui_wait_key() timed out, always reboot to main system
+            LOGI("timed out waiting for key input; rebooting.\n");
+            ui_end_menu();
+            reboot_main_system(ANDROID_RB_RESTART, 0, 0);
+            sleep(5);
+            LOGE("Failed to reboot system on timed out key input!!\n");
+            return GO_BACK;
         }
         else if (key == -2) {   // we are returning from ui_cancel_wait_key(): trigger a GO_BACK
             return GO_BACK;
@@ -659,6 +653,7 @@ static int compare_string(const void* a, const void* b) {
     return strcmp(*(const char**)a, *(const char**)b);
 }
 
+// legacy unused: we use gather_files() and choose_file_menu()
 static int
 update_directory(const char* path, const char* unmount_when_done) {
     ensure_path_mounted(path);
@@ -791,8 +786,9 @@ update_directory(const char* path, const char* unmount_when_done) {
 // remove static to be able to call it from ors menu
 void
 wipe_data(int confirm) {
-    if (confirm && !confirm_selection( "Confirm wipe of all user data?", "Yes - Wipe all user data"))
+    if (confirm && !confirm_selection( "Confirm wipe of all user data?", "Yes - Wipe all user data")) {
         return;
+    }
 
     ui_print("\n-- Wiping data...\n");
     device_wipe_data();
@@ -801,7 +797,9 @@ wipe_data(int confirm) {
     if (has_datadata()) {
         erase_volume("/datadata");
     }
+
     erase_volume("/sd-ext");
+
     // erase .android_secure from /sdcard or /storage/sdcard0
     erase_volume(get_android_secure_path());
 
@@ -847,7 +845,7 @@ int enter_sideload_mode(int status) {
         if (status != INSTALL_SUCCESS) {
             ui_set_background(BACKGROUND_ICON_ERROR);
             ui_print("Installation aborted.\n");
-        } else if (!ui_text_visible()) {
+        } else if (!ui_IsTextVisible()) {
             return status;  // recovery start command: reboot if logs aren't visible
         } else {
             ui_set_background(icon);
@@ -893,7 +891,7 @@ prompt_and_wait(int status) {
 
         // device-specific code may take some action here.  It may
         // return one of the core actions handled in the switch
-        // statement below.
+        // statement below. (this can alter show_text state!!)
         chosen_item = device_perform_action(chosen_item);
 
         int ret = 0;
@@ -904,21 +902,20 @@ prompt_and_wait(int status) {
                     return;
 
                 case ITEM_WIPE_DATA:
-                    if(ui_text_visible())
+                    if (ui_IsTextVisible())
                         wipe_data_menu();
                     else
-                        wipe_data(ui_text_visible());
-                    if (!ui_text_visible()) return;
+                        wipe_data(ui_IsTextVisible());
+                    if (!ui_IsTextVisible()) return;
                     break;
 
                 case ITEM_WIPE_CACHE:
-                    if (confirm_selection("Confirm wipe?", "Yes - Wipe Cache"))
-                    {
-                        ui_print("\n-- Wiping cache...\n");
-                        erase_volume("/cache");
-                        ui_print("Cache wipe complete.\n");
-                        if (!ui_text_visible()) return;
-                    }
+                    if (ui_IsTextVisible() && !confirm_selection("Confirm wipe?", "Yes - Wipe Cache"))
+                        break;
+                    ui_print("\n-- Wiping cache...\n");
+                    erase_volume("/cache");
+                    ui_print("Cache wipe complete.\n");
+                    if (!ui_IsTextVisible()) return;
                     break;
 
                 case ITEM_APPLY_ZIP:
@@ -1008,6 +1005,19 @@ void reboot_main_system(int cmd, int flags, char *arg) {
 
     finish_recovery(NULL); // sync() in here
     vold_unmount_all();
+
+    char buffer[80];
+    strcpy(buffer, "reboot,");
+    if (arg != NULL) {
+        strncat(buffer, arg, sizeof(buffer));
+    }
+    property_set(ANDROID_RB_PROPERTY, buffer);
+    sleep(5);
+
+    // Attempt to reboot using older methods in case the recovery
+    // that we are updating does not support init property reboot
+    // android_reboot() is defined in libcutils/android_reboot.c
+    LOGI("trying to reboot old android_reboot() command\n");
     android_reboot(cmd, flags, arg);
 }
 
@@ -1116,7 +1126,7 @@ main(int argc, char **argv) {
 
     const char *send_intent = NULL;
     const char *update_package = NULL;
-    int wipe_data = 0, wipe_cache = 0, show_text = 0, sideload = 0;
+    int wipe_data = 0, wipe_cache = 0, wipe_media = 0, show_text = 0, sideload = 0;
     bool just_exit = false;
     bool shutdown_after = false;
 
@@ -1126,11 +1136,8 @@ main(int argc, char **argv) {
         switch (arg) {
         case 's': send_intent = optarg; break;
         case 'u': update_package = optarg; break;
-        case 'w':
-#ifndef BOARD_RECOVERY_ALWAYS_WIPES
-        wipe_data = wipe_cache = 1;
-#endif
-        break;
+        case 'w': wipe_data = wipe_cache = 1; break;
+        case 'm': wipe_media = 1; break;
         case 'c': wipe_cache = 1; break;
         case 't': show_text = 1; break;
         case 'x': just_exit = true; break;
@@ -1167,7 +1174,7 @@ main(int argc, char **argv) {
     }
     // ui_SetStage(5, 8); // debug
 
-    if (show_text) ui_set_show_text(1);
+    if (show_text) ui_ShowText(true);
 
     struct selinux_opt seopts[] = {
       { SELABEL_OPT_PATH, "/file_contexts" }
@@ -1220,7 +1227,7 @@ main(int argc, char **argv) {
             char buffer[PROPERTY_VALUE_MAX+1];
             property_get("ro.build.fingerprint", buffer, "");
             if (strstr(buffer, ":userdebug/") || strstr(buffer, ":eng/")) {
-                ui_set_show_text(1);
+                ui_ShowText(true);
             }
         }
     } else if (wipe_data) {
@@ -1234,12 +1241,15 @@ main(int argc, char **argv) {
     } else if (wipe_cache) {
         if (wipe_cache && erase_volume("/cache")) status = INSTALL_ERROR;
         if (status != INSTALL_SUCCESS) ui_print("Cache wipe failed.\n");
+    } else if (wipe_media) {
+        if (is_data_media() && erase_volume("/data/media")) status = INSTALL_ERROR;
+        if (status != INSTALL_SUCCESS) ui_print("Media wipe failed.\n");
     } else if (sideload) {
         // we need show_text to show adb sideload cancel menu
-        int text_visible = ui_text_visible();
-        ui_set_show_text(1);
+        bool text_visible = ui_IsTextVisible();
+        ui_SetShowText(true);
         status = enter_sideload_mode(status);
-        ui_set_show_text(text_visible);
+        ui_SetShowText(text_visible);
     } else if (!just_exit) {
         // let's check recovery start up scripts (openrecoveryscript and ROM Manager extendedcommands)
         status = INSTALL_NONE; // No command specified, it is a normal recovery boot unless we find a boot script to run
@@ -1247,8 +1257,8 @@ main(int argc, char **argv) {
         LOGI("Checking for extendedcommand & OpenRecoveryScript...\n");
 
         // we need show_text to show boot scripts log and sideload menu in ors scripts
-        int text_visible = ui_text_visible();
-        ui_set_show_text(1);
+        bool text_visible = ui_IsTextVisible();
+        ui_SetShowText(true);
         if (0 == check_boot_script_file(EXTENDEDCOMMAND_SCRIPT)) {
             LOGI("Running extendedcommand...\n");
             status = INSTALL_ERROR;
@@ -1265,7 +1275,7 @@ main(int argc, char **argv) {
             no_wipe_confirm = 0; // script done, next ones cannot be bootscripts until we restart recovery
         }
 
-        ui_set_show_text(text_visible);
+        ui_SetShowText(text_visible);
     }
 
     if (status == INSTALL_ERROR || status == INSTALL_CORRUPT) {
@@ -1273,8 +1283,8 @@ main(int argc, char **argv) {
         // ui_set_background(BACKGROUND_ICON_ERROR); // will be set in prompt_and_wait() after recovery lock check
         handle_failure();
     }
-    if (status != INSTALL_SUCCESS || ui_text_visible()) {
-        ui_set_show_text(1);
+    if (status != INSTALL_SUCCESS || ui_IsTextVisible()) {
+        ui_SetShowText(true);
 #ifdef PHILZ_TOUCH_RECOVERY
         check_recovery_lock();
 #endif
@@ -1282,10 +1292,6 @@ main(int argc, char **argv) {
     }
 
     // We reach here when in main menu we choose reboot main system or on success install of boot scripts and recovery commands
-    // If there is a radio image pending, reboot now to install it.
-    maybe_install_firmware_update(send_intent);
-
-    // Otherwise, get ready to boot the main system...
     finish_recovery(send_intent);
     if (shutdown_after) {
         ui_print("Shutting down...\n");
