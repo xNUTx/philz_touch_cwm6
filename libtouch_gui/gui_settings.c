@@ -430,7 +430,7 @@ void apply_brightness_value(long int dim_value) {
         strcpy(libtouch_flags.brightness_sys_file, brightness_user_path.value);
     }
 
-// Test if the brightness path exists
+    // Test if the brightness path exists
     struct stat s;
     int fchkerr = stat(libtouch_flags.brightness_sys_file, &s);
 
@@ -451,7 +451,7 @@ void apply_brightness_value(long int dim_value) {
             brightness_path = find_file_in_path("/sys/class/leds/lcd-backlight_2", "brightness", 0, 0);
         } else if (brightness_path == NULL) {
             brightness_path = find_file_in_path("/sys/class/leds/lcd-backlight", "brightness", 0, 0);
-}
+        }
         if (brightness_path != NULL) {
             strcpy(libtouch_flags.brightness_sys_file, brightness_path);
             sprintf(brightness_user_path.value, sizeof(brightness_user_path.value), "%s", brightness_path);
@@ -498,6 +498,8 @@ void apply_brightness_value(long int dim_value) {
         dim_value = set_brightness.value;
     }
 
+    LOGI("Will write new brightness value into brightness file in %s \n", libtouch_flags.brightness_sys_file);
+
     // apply user set brightness
     FILE *file = fopen(libtouch_flags.brightness_sys_file, "w");
     if (file == NULL) {
@@ -521,7 +523,7 @@ void apply_brightness_value(long int dim_value) {
             fclose(file);
     }
 }
-      
+
 static void toggle_brightness() {
     char value[10];
     if (set_brightness.value >= max_brightness_value) {
