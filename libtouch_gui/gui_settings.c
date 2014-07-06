@@ -439,17 +439,17 @@ void apply_brightness_value(long int dim_value) {
         // no file was defined during compile and we have none in settings file
         // try to search for it in pre-defined paths. If we find one, we save it to settings for next boot
         char* brightness_path = find_file_in_path("/sys/class/backlight", "brightness", 0, 0);
-        if (brightness_path == NULL) {
+        if (brightness_path == NULL && directory_found("/sys/class/leds/wled:backlight") == 1) {
             brightness_path = find_file_in_path("/sys/class/leds/wled:backlight", "brightness", 0, 0);
-        } else if (brightness_path == NULL) {
+        } else if (brightness_path == NULL && directory_found("/sys/class/leds/lm3533-lcd-bl") == 1) {
             brightness_path = find_file_in_path("/sys/class/leds/lm3533-lcd-bl", "brightness", 0, 0);
-        } else if (brightness_path == NULL) {
+        } else if (brightness_path == NULL && directory_found("/sys/class/leds/lm3533-lcd-bl-1") == 1) {
             brightness_path = find_file_in_path("/sys/class/leds/lm3533-lcd-bl-1", "brightness", 0, 0);
-        } else if (brightness_path == NULL) {
+        } else if (brightness_path == NULL && directory_found("/sys/class/leds/lcd-backlight_1") == 1) {
             brightness_path = find_file_in_path("/sys/class/leds/lcd-backlight_1", "brightness", 0, 0);
-        } else if (brightness_path == NULL) {
+        } else if (brightness_path == NULL && directory_found("/sys/class/leds/lcd-backlight_2") == 1) {
             brightness_path = find_file_in_path("/sys/class/leds/lcd-backlight_2", "brightness", 0, 0);
-        } else if (brightness_path == NULL) {
+        } else if (brightness_path == NULL && directory_found("/sys/class/leds/lcd-backlight") == 1) {
             brightness_path = find_file_in_path("/sys/class/leds/lcd-backlight", "brightness", 0, 0);
         }
         if (brightness_path != NULL) {
