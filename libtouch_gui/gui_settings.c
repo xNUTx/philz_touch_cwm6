@@ -439,17 +439,17 @@ void apply_brightness_value(long int dim_value) {
         // no file was defined during compile and we have none in settings file
         // try to search for it in pre-defined paths. If we find one, we save it to settings for next boot
         char* brightness_path = find_file_in_path("/sys/class/backlight", "brightness", 0, 0);
-        if (brightness_path == NULL && directory_found("/sys/class/leds/wled:backlight") == 1) {
+        if (brightness_path == NULL && access("/sys/class/leds/wled:backlight/", F_OK) != 0) {
             brightness_path = find_file_in_path("/sys/class/leds/wled:backlight", "brightness", 0, 0);
-        } else if (brightness_path == NULL && directory_found("/sys/class/leds/lm3533-lcd-bl") == 1) {
+        } else if (brightness_path == NULL && access("/sys/class/leds/lm3533-lcd-bl/", F_OK) == 0) {
             brightness_path = find_file_in_path("/sys/class/leds/lm3533-lcd-bl", "brightness", 0, 0);
-        } else if (brightness_path == NULL && directory_found("/sys/class/leds/lm3533-lcd-bl-1") == 1) {
+        } else if (brightness_path == NULL && access("/sys/class/leds/lm3533-lcd-bl-1/", F_OK) == 0) {
             brightness_path = find_file_in_path("/sys/class/leds/lm3533-lcd-bl-1", "brightness", 0, 0);
-        } else if (brightness_path == NULL && directory_found("/sys/class/leds/lcd-backlight_1") == 1) {
+        } else if (brightness_path == NULL && access("/sys/class/leds/lcd-backlight_1/", F_OK) == 0) {
             brightness_path = find_file_in_path("/sys/class/leds/lcd-backlight_1", "brightness", 0, 0);
-        } else if (brightness_path == NULL && directory_found("/sys/class/leds/lcd-backlight_2") == 1) {
+        } else if (brightness_path == NULL && access("/sys/class/leds/lcd-backlight_2/", F_OK) == 0) {
             brightness_path = find_file_in_path("/sys/class/leds/lcd-backlight_2", "brightness", 0, 0);
-        } else if (brightness_path == NULL && directory_found("/sys/class/leds/lcd-backlight") == 1) {
+        } else if (brightness_path == NULL && access("/sys/class/leds/lcd-backlight/", F_OK) != 0) {
             brightness_path = find_file_in_path("/sys/class/leds/lcd-backlight", "brightness", 0, 0);
         }
         if (brightness_path != NULL) {
@@ -842,13 +842,13 @@ static void apply_qcom_time_daemon_fixes(int on_start) {
     if (on_start) {
         // called on recovery start, no need to parse settings file when called from menus
         char value[PROPERTY_VALUE_MAX];
-        read_config_file(PHILZ_SETTINGS_FILE, use_qcom_time_daemon.key, value, "0");
+        read_config_file(PHILZ_SETTINGS_FILE, use_qcom_time_daemon.key, value, "1");
         if (strcmp(value, "1") == 0)
             use_qcom_time_daemon.value = 1;
         else
             use_qcom_time_daemon.value = 0;
 
-        read_config_file(PHILZ_SETTINGS_FILE, use_qcom_time_data_files.key, value, "1");
+        read_config_file(PHILZ_SETTINGS_FILE, use_qcom_time_data_files.key, value, "0");
         if (strcmp(value, "1") == 0 || strcmp(value, "true") == 0)
             use_qcom_time_data_files.value = 1;
         else
