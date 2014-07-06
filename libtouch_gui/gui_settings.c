@@ -848,7 +848,7 @@ static void apply_qcom_time_daemon_fixes(int on_start) {
         else
             use_qcom_time_daemon.value = 0;
 
-        read_config_file(PHILZ_SETTINGS_FILE, use_qcom_time_data_files.key, value, "0");
+        read_config_file(PHILZ_SETTINGS_FILE, use_qcom_time_data_files.key, value, "1");
         if (strcmp(value, "1") == 0 || strcmp(value, "true") == 0)
             use_qcom_time_data_files.value = 1;
         else
