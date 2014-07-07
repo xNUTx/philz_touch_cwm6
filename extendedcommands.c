@@ -2068,6 +2068,7 @@ int verify_root_and_recovery() {
 
     int ret = 0;
     struct stat st;
+#ifdef INSTALL_RECOVERY_CHECK
     // check to see if install-recovery.sh is going to clobber recovery
     // install-recovery.sh is also used to run the su daemon on stock rom for 4.3+
     // so verify that doesn't exist...
@@ -2083,6 +2084,7 @@ int verify_root_and_recovery() {
             }
         }
     }
+#endif
 
     // do not check permissions if system android version is 4.3+
     // in that case, no need to chmod 06755 as it could break root on +4.3 ROMs
