@@ -23,6 +23,7 @@
 #include "bootloader.h"
 #include "common.h"
 #include "cutils/properties.h"
+#include "firmware.h"
 #include "install.h"
 #include "make_ext4fs.h"
 #include "minui/minui.h"
@@ -288,7 +289,7 @@ int show_install_update_menu() {
             else
                 show_choose_zip_menu(last_path_used);
         } else if (chosen_item == FIXED_TOP_INSTALL_ZIP_MENUS + num_extra_volumes + 2) {
-            enter_sideload_mode(INSTALL_SUCCESS);
+            apply_from_adb();
         } else if (chosen_item == FIXED_TOP_INSTALL_ZIP_MENUS + num_extra_volumes + 3) {
             show_multi_flash_menu();
         } else if (chosen_item == FIXED_TOP_INSTALL_ZIP_MENUS + num_extra_volumes + 4) {
@@ -1845,7 +1846,7 @@ int show_advanced_menu() {
                 break;
             }
             case 1:
-                handle_failure();
+                handle_failure(1);
                 break;
             case 2: {
                 ui_print("Outputting key codes.\n");
@@ -2016,7 +2017,9 @@ void process_volumes() {
     return;
 }
 
-void handle_failure() {
+void handle_failure(int ret) {
+    if (ret == 0)
+        return;
     if (0 != ensure_path_mounted(get_primary_storage_path()))
         return;
     mkdir("/sdcard/clockworkmod", S_IRWXU | S_IRWXG | S_IRWXO);
@@ -2072,7 +2075,7 @@ int verify_root_and_recovery() {
         // check install-recovery.sh exists and is executable
         if (0 == lstat("/system/etc/install-recovery.sh", &st)) {
             if (st.st_mode & (S_IXUSR | S_IXGRP | S_IXOTH)) {
-                ui_SetShowText(true);
+                ui_show_text(1);
                 if (confirm_selection("ROM may flash stock recovery on boot. Fix?", "Yes - Disable recovery flash")) {
                     __system("chmod -x /system/etc/install-recovery.sh");
                     ret = 1;
@@ -2099,7 +2102,7 @@ int verify_root_and_recovery() {
         if (S_ISREG(st.st_mode)) {
             su_nums += 1;
             if (needs_suid && (st.st_mode & (S_ISUID | S_ISGID)) != (S_ISUID | S_ISGID)) {
-                ui_SetShowText(true);
+                ui_show_text(1);
                 if (confirm_selection("Root access possibly lost. Fix?", "Yes - Fix root (/system/bin/su)")) {
                     __system("chmod 6755 /system/bin/su");
                     ret = 1;
@@ -2113,7 +2116,7 @@ int verify_root_and_recovery() {
         if (S_ISREG(st.st_mode)) {
             su_nums += 1;
             if (needs_suid && (st.st_mode & (S_ISUID | S_ISGID)) != (S_ISUID | S_ISGID)) {
-                ui_SetShowText(true);
+                ui_show_text(1);
                 if (confirm_selection("Root access possibly lost. Fix?", "Yes - Fix root (/system/xbin/su)")) {
                     __system("chmod 6755 /system/xbin/su");
                     ret = 1;
@@ -2124,7 +2127,7 @@ int verify_root_and_recovery() {
 
     // If we have no root (exists == 0) or we have two su instances (exists == 2), prompt to properly root the device
     if (!exists || su_nums != 1) {
-        ui_SetShowText(true);
+        ui_show_text(1);
         if (confirm_selection("Root access is missing/broken. Root device?", "Yes - Apply root (/system/xbin/su)")) {
             __system("/sbin/install-su.sh");
             ret = 2;

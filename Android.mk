@@ -2,11 +2,11 @@ LOCAL_PATH := $(call my-dir)
 
 ifeq ($(RECOVERY_VARIANT),)
 ifeq ($(LOCAL_PATH),bootable/recovery)
-RECOVERY_VARIANT := cwm
+RECOVERY_VARIANT := philz
 endif
 endif
 
-ifeq ($(RECOVERY_VARIANT),cwm)
+ifeq ($(RECOVERY_VARIANT),philz)
 
 # philz touch gui: either prebuilt or from sources
 PHILZ_TOUCH_RECOVERY := true
@@ -48,8 +48,10 @@ LOCAL_SRC_FILES := \
     digest/md5.c \
     recovery_settings.c \
     nandroid.c \
+    reboot.c \
     ../../system/core/toolbox/dynarray.c \
     ../../system/core/toolbox/newfs_msdos.c \
+    firmware.c \
     edifyscripting.c \
     prop.c \
     adb_install.c \
@@ -78,7 +80,7 @@ endif
 # This should be the same line as upstream to not break makerecoveries.sh
 RECOVERY_VERSION := $(RECOVERY_NAME) v6.0.5.0
 
-PHILZ_BUILD := 6.48.9
+PHILZ_BUILD := 6.48.4
 CWM_BASE_VERSION := $(shell echo $(RECOVERY_VERSION) | cut -d ' ' -f 3)
 LOCAL_CFLAGS += -DCWM_BASE_VERSION="$(CWM_BASE_VERSION)"
 
@@ -174,7 +176,7 @@ else
   LOCAL_SRC_FILES += $(BOARD_CUSTOM_RECOVERY_UI)
 endif
 
-LOCAL_STATIC_LIBRARIES += libvoldclient libsdcard libminipigz libreboot_static libfsck_msdos
+LOCAL_STATIC_LIBRARIES += libvoldclient libsdcard libminipigz libfsck_msdos
 LOCAL_STATIC_LIBRARIES += libmake_ext4fs libext4_utils_static libz libsparse_static
 
 ifeq ($(BOARD_RECOVERY_USE_LIBTAR),true)
@@ -244,14 +246,6 @@ $(RECOVERY_BUSYBOX_SYMLINKS): $(LOCAL_INSTALLED_MODULE)
 	$(hide) ln -sf $(BUSYBOX_BINARY) $@
 
 ALL_DEFAULT_INSTALLED_MODULES += $(RECOVERY_BUSYBOX_SYMLINKS) 
-
-# Reboot static library
-include $(CLEAR_VARS)
-LOCAL_MODULE := libreboot_static
-LOCAL_MODULE_TAGS := optional
-LOCAL_CFLAGS := -Dmain=reboot_main
-LOCAL_SRC_FILES := ../../system/core/reboot/reboot.c
-include $(BUILD_STATIC_LIBRARY)
 
 include $(CLEAR_VARS)
 LOCAL_MODULE := killrecovery.sh
