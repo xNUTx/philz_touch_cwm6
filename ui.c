@@ -81,6 +81,7 @@ struct bitmaps_array BITMAPS[] = {
     { &gBackgroundIcon[BACKGROUND_ICON_INSTALLING],             "icon_installing" },
     { &gBackgroundIcon[BACKGROUND_ICON_ERROR],                  "icon_error" },
     { &gBackgroundIcon[BACKGROUND_ICON_CLOCKWORK],              "icon_clockwork" },
+    { &gBackgroundIcon[BACKGROUND_ICON_CID],                    "icon_cid" },
     { &gBackgroundIcon[BACKGROUND_ICON_FIRMWARE_INSTALLING],    "icon_firmware_install" },
     { &gBackgroundIcon[BACKGROUND_ICON_FIRMWARE_ERROR],         "icon_firmware_error" },
     { &gProgressBarEmpty,                                       "progress_empty" },
@@ -114,8 +115,8 @@ static int gPagesIdentical = 0;
 char text[MAX_ROWS][MAX_COLS];
 int text_cols = 0, text_rows = 0;
 int text_col = 0, text_row = 0, text_top = 0;
-bool show_text = 0;
-bool show_text_ever = 0;   // has show_text ever been 1?
+int show_text = 0;
+int show_text_ever = 0;   // has show_text ever been 1?
 
 char menu[MENU_MAX_ROWS][MENU_MAX_COLS];
 int show_menu = 0;
@@ -939,7 +940,7 @@ void ui_end_menu() {
     pthread_mutex_unlock(&gUpdateMutex);
 }
 
-bool ui_IsTextVisible()
+int ui_text_visible()
 {
     pthread_mutex_lock(&gUpdateMutex);
     int visible = show_text;
@@ -947,8 +948,7 @@ bool ui_IsTextVisible()
     return visible;
 }
 
-// show_text was visible at least once
-bool ui_WasTextEverVisible()
+int ui_text_ever_visible()
 {
     pthread_mutex_lock(&gUpdateMutex);
     int ever_visible = show_text_ever;
@@ -956,20 +956,13 @@ bool ui_WasTextEverVisible()
     return ever_visible;
 }
 
-// immediately refresh screen and show text
-void ui_ShowText(bool visible)
+void ui_show_text(int visible)
 {
     pthread_mutex_lock(&gUpdateMutex);
     show_text = visible;
     if (show_text) show_text_ever = 1;
     update_screen_locked();
     pthread_mutex_unlock(&gUpdateMutex);
-}
-
-// show text, but not immediately: next screen update will show text
-void ui_SetShowText(bool visible) {
-    show_text = visible;
-    if (show_text) show_text_ever = 1;
 }
 
 // Return true if USB is connected.
@@ -1185,6 +1178,10 @@ void ui_set_log_stdout(int enabled) {
 int ui_should_log_stdout()
 {
     return ui_log_stdout;
+}
+
+void ui_set_show_text(int value) {
+    show_text = value;
 }
 
 void ui_set_showing_back_button(int showBackButton) {

@@ -49,6 +49,7 @@
 #include "bootloader.h"
 #include "common.h"
 #include "cutils/properties.h"
+#include "firmware.h"
 #include "install.h"
 #include "make_ext4fs.h"
 #include "minui/minui.h"
@@ -430,31 +431,15 @@ void apply_brightness_value(long int dim_value) {
         strcpy(libtouch_flags.brightness_sys_file, brightness_user_path.value);
     }
 
-    // Test if the brightness path exists
-    struct stat s;
-    int fchkerr = stat(libtouch_flags.brightness_sys_file, &s);
-
-    // trigger this if the path is unavailable too...
-    if (strcmp(libtouch_flags.brightness_sys_file, "no_file") == 0 || errno == ENOENT) {
+    if (strcmp(libtouch_flags.brightness_sys_file, "no_file") == 0) {
         // no file was defined during compile and we have none in settings file
         // try to search for it in pre-defined paths. If we find one, we save it to settings for next boot
         char* brightness_path = find_file_in_path("/sys/class/backlight", "brightness", 0, 0);
-        if (brightness_path == NULL && access("/sys/class/leds/wled:backlight/", F_OK) != 0) {
-            brightness_path = find_file_in_path("/sys/class/leds/wled:backlight", "brightness", 0, 0);
-        } else if (brightness_path == NULL && access("/sys/class/leds/lm3533-lcd-bl/", F_OK) == 0) {
-            brightness_path = find_file_in_path("/sys/class/leds/lm3533-lcd-bl", "brightness", 0, 0);
-        } else if (brightness_path == NULL && access("/sys/class/leds/lm3533-lcd-bl-1/", F_OK) == 0) {
-            brightness_path = find_file_in_path("/sys/class/leds/lm3533-lcd-bl-1", "brightness", 0, 0);
-        } else if (brightness_path == NULL && access("/sys/class/leds/lcd-backlight_1/", F_OK) == 0) {
-            brightness_path = find_file_in_path("/sys/class/leds/lcd-backlight_1", "brightness", 0, 0);
-        } else if (brightness_path == NULL && access("/sys/class/leds/lcd-backlight_2/", F_OK) == 0) {
-            brightness_path = find_file_in_path("/sys/class/leds/lcd-backlight_2", "brightness", 0, 0);
-        } else if (brightness_path == NULL && access("/sys/class/leds/lcd-backlight/", F_OK) != 0) {
+        if (brightness_path == NULL)
             brightness_path = find_file_in_path("/sys/class/leds/lcd-backlight", "brightness", 0, 0);
-        }
         if (brightness_path != NULL) {
             strcpy(libtouch_flags.brightness_sys_file, brightness_path);
-            sprintf(brightness_user_path.value, sizeof(brightness_user_path.value), "%s", brightness_path);
+            snprintf(brightness_user_path.value, sizeof(brightness_user_path.value), "%s", brightness_path);
             write_config_file(PHILZ_SETTINGS_FILE, brightness_user_path.key, brightness_user_path.value);
             free(brightness_path);
         } else {
@@ -498,8 +483,6 @@ void apply_brightness_value(long int dim_value) {
         dim_value = set_brightness.value;
     }
 
-    LOGI("Will write new brightness value into brightness file in %s \n", libtouch_flags.brightness_sys_file);
-
     // apply user set brightness
     FILE *file = fopen(libtouch_flags.brightness_sys_file, "w");
     if (file == NULL) {
@@ -508,20 +491,7 @@ void apply_brightness_value(long int dim_value) {
     }
 
     fprintf(file, "%ld\n", dim_value);
-    fclose(file);
-
-    // Xperia ZL has a weird thing... this should fix that...
-    if (strcmp(libtouch_flags.brightness_sys_file, "/sys/class/leds/lm3533-lcd-bl-1/brightness") == 1 &&
-        find_file_in_path("/sys/class/leds/lm3533-lcd-bl-2", "brightness", 0, 0) != NULL) {
-            FILE *file = fopen("/sys/class/leds/lm3533-lcd-bl-2/brightness", "w");
-            if (file == NULL) {
-                LOGE("Unable to create brightness sys file!\n");
-                return;
-            }
-
-            fprintf(file, "%ld\n", dim_value);
-            fclose(file);
-    }
+    fclose(file);    
 }
 
 static void toggle_brightness() {
@@ -720,7 +690,16 @@ static void parse_t_daemon_data_files() {
     uint64_t offset = 0;
     struct timeval tv;
     struct dirent *dt;
-    
+
+    // Don't fix the time of it already is over year 2000, it is likely already okay, either
+    // because the RTC is fine or because the recovery already set it and then crashed
+    gettimeofday(&tv, NULL);
+    if (tv.tv_sec > 946684800) {
+        // timestamp of 2000-01-01 00:00:00
+        LOGE("parse_t_daemon_data_files: time already okay (after year 2000).\n");
+        return;
+    }
+
     // on start, /data will be unmounted by refresh_recovery_settings()
     if (ensure_path_mounted("/data") != 0) {
         LOGE("parse_t_daemon_data_files: failed to mount /data\n");
@@ -842,7 +821,7 @@ static void apply_qcom_time_daemon_fixes(int on_start) {
     if (on_start) {
         // called on recovery start, no need to parse settings file when called from menus
         char value[PROPERTY_VALUE_MAX];
-        read_config_file(PHILZ_SETTINGS_FILE, use_qcom_time_daemon.key, value, "1");
+        read_config_file(PHILZ_SETTINGS_FILE, use_qcom_time_daemon.key, value, "0");
         if (strcmp(value, "1") == 0)
             use_qcom_time_daemon.value = 1;
         else
@@ -2863,9 +2842,9 @@ static void recovery_change_passkey() {
     char pass_string[128] = "";
     int i = 0;
     int key_match = 1;
+    ui_set_show_text(0);
 
     // type in new passkey
-    ui_SetShowText(false);
     ui_clear_key_queue();
     for (i = 0; i < RECOVERY_LOCK_MAX_CHARS; ++i) {
         char tmp[64];
@@ -2917,7 +2896,7 @@ static void recovery_change_passkey() {
         ui_print("Recovery Lock is enabled\n");
     }
 
-    ui_SetShowText(true);
+    ui_set_show_text(1);
 }
 
 // check if recovery needs to be locked and prompt for a pass key if it is defined
@@ -2951,8 +2930,8 @@ void check_recovery_lock() {
 
     // hide screen menus and ui_print
     // this function can be called on recovery start (show_text == 0) or from menus (show_text == 1) to lock recovery or reset password
-    bool visible = ui_IsTextVisible();
-    ui_SetShowText(false);
+    int visible = ui_text_visible();
+    ui_set_show_text(0);
 
     // parse the password: "key1,key2,key3,key4..."
     int i = 0;
@@ -2980,10 +2959,10 @@ void check_recovery_lock() {
     char pass_display[128] = "";
     char trials_left_message[64];
 
+    // don't allow pass if key file was tempered with
+    // this will only allow passwords of RECOVERY_LOCK_MAX_CHARS characters
     if (pass_chars != RECOVERY_LOCK_MAX_CHARS) {
-        // don't allow pass if key file was tempered with
-        // this will only allow passwords of RECOVERY_LOCK_MAX_CHARS characters
-        LOGI("unusual passkey length (%d)\n", pass_chars);
+        LOGE("unusual passkey length (%d)\n", pass_chars);
         key_err = RECOVERY_LOCK_MAX_ERROR;
     }
 
@@ -3050,7 +3029,7 @@ void check_recovery_lock() {
 
     // unlock and continue
     LOGI("Recovery unlocked\n");
-    ui_SetShowText(visible);
+    ui_set_show_text(visible);
     property_set("sys.usb.recovery_lock", "0");
 }
 
