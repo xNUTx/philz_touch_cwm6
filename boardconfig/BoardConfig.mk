@@ -77,6 +77,14 @@ else ifeq ($(TARGET_PRODUCT), cm_honami)
     TARGET_SCREEN_WIDTH := 1080
     BRIGHTNESS_SYS_FILE := "/sys/class/leds/wled:backlight/brightness"
 
+#Sony Xperia Z1 Compact (amami)
+else ifeq ($(TARGET_PRODUCT), cm_amami)
+    TARGET_COMMON_NAME := Xperia Z1 Compact
+    KERNEL_EXFAT_MODULE_NAME := "texfat"
+    TARGET_SCREEN_HEIGHT := 1280
+    TARGET_SCREEN_WIDTH := 720
+    BRIGHTNESS_SYS_FILE := "/sys/class/leds/wled:backlight/brightness"
+
 #Sony Xperia Z2 (sirius)
 else ifeq ($(TARGET_PRODUCT), cm_sirius)
     TARGET_COMMON_NAME := Xperia Z2
