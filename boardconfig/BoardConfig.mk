@@ -221,6 +221,14 @@ else ifeq ($(TARGET_PRODUCT), cm_castor)
     TARGET_SCREEN_WIDTH := 1920
     BRIGHTNESS_SYS_FILE := "/sys/class/leds/wled:backlight/brightness"
 
+#Sony Xperia T2 Ultra (tianchi)
+else ifeq ($(TARGET_PRODUCT), cm_tianchi)
+    TARGET_COMMON_NAME := Xperia T2 Ultra
+    KERNEL_EXFAT_MODULE_NAME := "texfat"
+    TARGET_SCREEN_HEIGHT := 1280
+    TARGET_SCREEN_WIDTH := 720
+    BRIGHTNESS_SYS_FILE := "/sys/class/leds/lm3630-lcd-bl/brightness"
+
 endif
 #---- end device specific config
 
