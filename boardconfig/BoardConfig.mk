@@ -195,7 +195,7 @@ else ifeq ($(TARGET_PRODUCT), cm_pollux)
     KERNEL_EXFAT_MODULE_NAME := "texfat"
     TARGET_SCREEN_HEIGHT := 1200
     TARGET_SCREEN_WIDTH := 1920
-    BRIGHTNESS_SYS_FILE := "/sys/devices/i2c-0/0-002c/backlight/lcd-backlight/brightness"
+    BRIGHTNESS_SYS_FILE := "/sys/class/backlight/lcd-backlight/brightness"
 
 #Sony Xperia Tablet Z LTE (pollux_windy)
 else ifeq ($(TARGET_PRODUCT), cm_pollux_windy)
@@ -203,7 +203,7 @@ else ifeq ($(TARGET_PRODUCT), cm_pollux_windy)
     KERNEL_EXFAT_MODULE_NAME := "texfat"
     TARGET_SCREEN_HEIGHT := 1200
     TARGET_SCREEN_WIDTH := 1920
-    BRIGHTNESS_SYS_FILE := "/sys/devices/i2c-0/0-002c/backlight/lcd-backlight/brightness"
+    BRIGHTNESS_SYS_FILE := "/sys/class/backlight/lcd-backlight/brightness"
 
 #Sony Xperia Z2 (sirius)
 else ifeq ($(TARGET_PRODUCT), cm_sirius)
