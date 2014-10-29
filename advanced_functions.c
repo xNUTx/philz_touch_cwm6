@@ -497,6 +497,33 @@ char* find_file_in_path(const char* dir, const char* filename, int depth, int fo
     return ret;
 }
 
+char new_find_file_in_path(char dir[PATH_MAX], char file[PATH_MAX]) {
+
+	DIR *dp;
+	struct dirent *entry;
+	struct stat statbuf;
+	char found[PATH_MAX];
+	if((dp = opendir(dir)) == NULL) {
+		return found;
+	}
+	chdir(dir);
+	while((entry = readdir(dp)) != NULL) {
+		lstat(entry->d_name,&statbuf);
+		if(S_ISDIR(statbuf.st_mode)) {
+			continue;
+		}
+		if(strcmp(file,entry->d_name) == 0) {
+			sprintf(found, "%s/%s", dir, entry->d_name);
+			return found;
+		}
+	}
+	chdir("..");
+	closedir(dp);
+	return found;
+
+}
+
+
 // check if file or folder exists
 int file_found(const char* filename) {
     struct stat s;

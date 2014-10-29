@@ -546,6 +546,16 @@ void gr_fb_blank(bool blank)
     }
     write(fd, blank ? "000" : "127", 3);
     close(fd);
+    // Xperia ZL has a weird thing... this should fix that...
+    if (strcmp(RECOVERY_LCD_BACKLIGHT_PATH, "/sys/class/leds/lm3533-lcd-bl-1/brightness") == 0) {
+	int file = open("/sys/class/leds/lm3533-lcd-bl-2/brightness", O_RDWR);
+	if (file < 0) {
+		LOGE("Unable to open the second brightness sys file!\n");
+	} else {
+		write(fd, blank ? "000" : "127", 3);
+	}
+	close(file);
+    }
 #else
     int ret;
     if (has_overlay && blank) {
@@ -561,3 +571,6 @@ void gr_fb_blank(bool blank)
     }
 #endif
 }
+
+/*
+*/

@@ -421,33 +421,6 @@ static void check_gesture_actions() {
         press_move_action.value = DISABLE_ACTION;
 }
 
-char new_find_file_in_path(char dir[PATH_MAX], char file[PATH_MAX]) {
-
-	DIR *dp;
-	struct dirent *entry;
-	struct stat statbuf;
-	char found[PATH_MAX];
-	if((dp = opendir(dir)) == NULL) {
-		return found;
-	}
-	chdir(dir);
-	while((entry = readdir(dp)) != NULL) {
-		lstat(entry->d_name,&statbuf);
-		if(S_ISDIR(statbuf.st_mode)) {
-			continue;
-		}
-		if(strcmp(file,entry->d_name) == 0) {
-			sprintf(found, "%s/%s", dir, entry->d_name);
-			return found;
-	        }
-	}
-	chdir("..");
-	closedir(dp);
-
-	return found;
-
-}
-
 // Passing a negative dim_value, will read config file and apply user set brightness (on recovery start)
 // Writing set_brightness.value to config file is done directly in the toggle brightness menu
 // Passing a non negative dim_value, will apply dim_value brightness level

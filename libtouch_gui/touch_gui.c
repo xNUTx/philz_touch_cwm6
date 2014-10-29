@@ -975,7 +975,11 @@ void ui_blank_screen(int blank_screen) {
 
 void ui_dim_screen(int dim_screen) {
     if (dim_screen)
-        apply_brightness_value(0);
+#ifdef NEEDS_SPECIFIC_DIM_VALUE
+        apply_brightness_value(NEEDS_SPECIFIC_DIM_VALUE);
+#else
+        apply_brightness_value(10);
+#endif
     else
         apply_brightness_value(set_brightness.value);
 
