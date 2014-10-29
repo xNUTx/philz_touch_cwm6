@@ -4544,20 +4544,11 @@ void show_format_sdcard_menu(const char* path) {
 void show_advanced_power_menu() {
     const char* headers[] = { "Advanced power options", "", NULL };
 
-<<<<<<< HEAD
     char* list[] = { "Reboot Recovery",
                      "Reboot to Bootloader",
                      "Reboot to FlashMode",
                      "Power Off",
                      NULL };
-=======
-    char* list[] = {
-        "Reboot Recovery",
-        "Reboot to Bootloader",
-        "Power Off",
-        NULL
-    };
->>>>>>> upstream/cm-11.0
 
     char bootloader_mode[PROPERTY_VALUE_MAX];
 #ifdef BOOTLOADER_CMD_ARG
