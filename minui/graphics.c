@@ -537,7 +537,8 @@ gr_pixel *gr_fb_data(void)
 void gr_fb_blank(bool blank)
 {
 #if defined(RECOVERY_LCD_BACKLIGHT_PATH)
-    FILE *first = fopen(char RECOVERY_LCD_BACKLIGHT_PATH, "w+");
+    char firstpath = RECOVERY_LCD_BACKLIGHT_PATH;
+    FILE *first = fopen(firstpath, "w+");
     if (first) {
 	char value[] = blank ? "000" : "127";
 	fwrite(value, 1, sizeof(value), first);
@@ -548,7 +549,8 @@ void gr_fb_blank(bool blank)
     fclose(first);
 #if defined(RECOVERY_SECOND_LCD_BACKLIGHT_PATH)
     /* Xperia ZL has a weird thing... this should fix that... */
-    FILE *second = fopen(char RECOVERY_SECOND_LCD_BACKLIGHT_PATH, "w+");
+    char secondpath = RECOVERY_SECOND_LCD_BACKLIGHT_PATH;
+    FILE *second = fopen(secondpath, "w+");
     if (second) {
 	char valuend[] = blank ? "000" : "127";
 	fwrite(valuend, 1, sizeof(valuend), second);
