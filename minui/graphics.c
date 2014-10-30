@@ -537,9 +537,7 @@ gr_pixel *gr_fb_data(void)
 void gr_fb_blank(bool blank)
 {
 #ifdef RECOVERY_LCD_BACKLIGHT_PATH
-    int fd;
-
-    fd = fopen(RECOVERY_LCD_BACKLIGHT_PATH, "w");
+    FILE* fd = fopen(RECOVERY_LCD_BACKLIGHT_PATH, "w");
     if (fd < 0) {
         perror("cannot open LCD backlight");
         return;
@@ -548,9 +546,7 @@ void gr_fb_blank(bool blank)
     fclose(fd);
 #ifdef RECOVERY_SECOND_LCD_BACKLIGHT_PATH
     /* Xperia ZL has a weird thing... this should fix that... */
-    int file;
-
-    file = fopen(RECOVERY_SECOND_LCD_BACKLIGHT_PATH, "w");
+    FILE* file = fopen(RECOVERY_SECOND_LCD_BACKLIGHT_PATH, "w");
     if (file < 0) {
 	perror("Unable to open the second brightness sys file");
 	return;
