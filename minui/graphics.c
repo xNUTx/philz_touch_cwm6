@@ -536,34 +536,16 @@ gr_pixel *gr_fb_data(void)
 
 void gr_fb_blank(bool blank)
 {
-#if defined(RECOVERY_LCD_BACKLIGHT_PATH)
-    char first_path[PATH_MAX];
-    sprintf(first_path, "%s", RECOVERY_LCD_BACKLIGHT_PATH);
-    FILE *first;
-    first = fopen(first_path, "w+");
-    if (first) {
-	char value[] = blank ? "000" : "127";
-	fwrite(value, 1, sizeof(value), first);
-    } else {
+#ifdef RECOVERY_LCD_BACKLIGHT_PATH
+    int fd;
+
+    fd = open(RECOVERY_LCD_BACKLIGHT_PATH, O_RDWR);
+    if (fd < 0) {
         perror("cannot open LCD backlight");
         return;
     }
-    fclose(first);
-#if defined(RECOVERY_SECOND_LCD_BACKLIGHT_PATH)
-    /* Xperia ZL has a weird thing... this should fix that... */
-    char second_path[PATH_MAX];
-    sprintf(second_path, "%s", RECOVERY_SECOND_LCD_BACKLIGHT_PATH);
-    FILE *second;
-    second = fopen(second_path, "w+");
-    if (second) {
-	char valuend[] = blank ? "000" : "127";
-	fwrite(valuend, 1, sizeof(valuend), second);
-    } else {
-	perror("Unable to open the second brightness sys file");
-	return;
-    }
-    fclose(second);
-#endif
+    write(fd, blank ? "000" : "127", 3);
+    close(fd);
 #else
     int ret;
     if (has_overlay && blank) {
@@ -579,6 +561,3 @@ void gr_fb_blank(bool blank)
     }
 #endif
 }
-
-/*
-*/

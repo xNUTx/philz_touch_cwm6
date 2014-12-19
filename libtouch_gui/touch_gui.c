@@ -224,7 +224,7 @@ int ui_showing_progress_bar() {
 
 //kanged this vibrate stuff from teamwin (thanks guys!)
 #define VIBRATOR_TIMEOUT_FILE    "/sys/class/timed_output/vibrator/enable"
-#define VIBRATOR_TIME_MS    62
+#define VIBRATOR_TIME_MS    25
 int vibrate_device(int timeout_ms) {
     char str[20];
     int fd;
@@ -991,11 +991,7 @@ void ui_blank_screen(bool blank_screen) {
 // used for timed out dim screen
 void ui_dim_screen(bool dim_screen) {
     if (dim_screen)
-#ifdef NEEDS_SPECIFIC_DIM_VALUE
-        apply_brightness_value(NEEDS_SPECIFIC_DIM_VALUE);
-#else
-        apply_brightness_value(10);
-#endif
+        apply_brightness_value(BRIGHTNESS_MIN_VALUE);
     else
         apply_brightness_value(set_brightness.value);
 

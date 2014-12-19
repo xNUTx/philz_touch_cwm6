@@ -429,56 +429,19 @@ void apply_brightness_value(long int dim_value) {
     }
 
     if (strcmp(libtouch_flags.brightness_sys_file, "no_file") == 0) {
-
         // no file was defined during compile and we have none in settings file
         // try to search for it in pre-defined paths. If we find one, we save it to settings for next boot
-
-	static const char *paths[] = { "/sys/class/backlight/", "/sys/class/leds/" };
-	static const char *sysctl[] = { "wled:backlight", "lm3533-lcd-bl", "lm3533-lcd-bl-1", "lcd-backlight_1", "pwm-backlight", "s6e8aa0", "panel", "s5p_bl", "bowser" };
-
-	char brightness_path;
-	char tmppath;
-	size_t i;
-	size_t j;
-
-	for(i = 0; i < (sizeof(paths)/sizeof(paths[0])); ++i) {
-
-		for(j = 0; j < (sizeof(sysctl)/sizeof(sysctl[0])); ++j) {
-
-			sprintf(tmppath, "%s%s", paths[i], sysctl[j]);
-
-			brightness_path = new_find_file_in_path(tmppath, "brightness");
-			if (brightness_path != NULL) {
-				break;
-			}
-
-		}
-
-		if (brightness_path != NULL) {
-			break;
-		}
-
-	}
-
-        if (brightness_path == NULL) {
-
-		brightness_path = new_find_file_in_path("/sys/class/leds/lcd-backlight", "brightness");
-
-	}
-
+        char* brightness_path = find_file_in_path("/sys/class/backlight", "brightness", 0, 0);
+        if (brightness_path == NULL)
+            brightness_path = find_file_in_path("/sys/class/leds/lcd-backlight", "brightness", 0, 0);
         if (brightness_path != NULL) {
-
-		strcpy(libtouch_flags.brightness_sys_file, brightness_path);
-		snprintf(brightness_user_path.value, sizeof(brightness_user_path.value), "%s", brightness_path);
-		write_config_file(PHILZ_SETTINGS_FILE, brightness_user_path.key, brightness_user_path.value);
-		free(brightness_path);
-
+            strcpy(libtouch_flags.brightness_sys_file, brightness_path);
+            snprintf(brightness_user_path.value, sizeof(brightness_user_path.value), "%s", brightness_path);
+            write_config_file(PHILZ_SETTINGS_FILE, brightness_user_path.key, brightness_user_path.value);
+            free(brightness_path);
         } else {
-
-		strcpy(libtouch_flags.brightness_sys_file, "none");
-
+            strcpy(libtouch_flags.brightness_sys_file, "none");
         }
-
     }
 
     if (strcmp(libtouch_flags.brightness_sys_file, "none") == 0) {
@@ -524,23 +487,7 @@ void apply_brightness_value(long int dim_value) {
     }
 
     fprintf(file, "%ld\n", dim_value);
-    fclose(file);
-
-	// Xperia ZL has a weird thing... this should fix that...
-	if (strcmp(libtouch_flags.brightness_sys_file, "/sys/class/leds/lm3533-lcd-bl-1/brightness") == 0 &&
-	    new_find_file_in_path("/sys/class/leds/lm3533-lcd-bl-2", "brightness") != NULL)
-	{
-
-		FILE *file = fopen("/sys/class/leds/lm3533-lcd-bl-2/brightness", "w");
-		if (file == NULL) {
-			LOGE("Unable to create the second brightness sys file!\n");
-			return;
-		}
-
-		fprintf(file, "%ld\n", dim_value);
-		fclose(file);
-	}
-
+    fclose(file);    
 }
 
 static void toggle_brightness() {
@@ -740,6 +687,15 @@ static void parse_t_daemon_data_files() {
     struct timeval tv;
     struct dirent *dt;
 
+    // Don't fix the time of it already is over year 2000, it is likely already okay, either
+    // because the RTC is fine or because the recovery already set it and then crashed
+    gettimeofday(&tv, NULL);
+    if (tv.tv_sec > 946684800) {
+        // timestamp of 2000-01-01 00:00:00
+        LOGE("parse_t_daemon_data_files: time already okay (after year 2000).\n");
+        return;
+    }
+
     // on start, /data will be unmounted by refresh_recovery_settings()
     if (ensure_path_mounted("/data") != 0) {
         LOGE("parse_t_daemon_data_files: failed to mount /data\n");
@@ -842,8 +798,8 @@ static void apply_qcom_rtc_offset(int on_start) {
         LOGI("applying rtc time offset...\n");
         FILE *f = fopen("/sys/class/rtc/rtc0/since_epoch", "r");
         if (f != NULL) {
-            long int rtc_offset;
             struct timeval tv;
+            long int rtc_offset;
             fscanf(f, "%ld", &rtc_offset);
             fclose(f);
             tv.tv_sec = rtc_offset + use_qcom_time_offset.value;
@@ -851,17 +807,6 @@ static void apply_qcom_rtc_offset(int on_start) {
             settimeofday(&tv, NULL);
             log_current_system_time();
         }
-#ifdef QCOM_RTC_FIX
-	struct timeval tvc;
-	gettimeofday(&tvc, NULL);
-
-	if (tvc.tv_sec < strtoull("1405209403", NULL, 10)) {
-
-		LOGI("Using since_epoch to correct time failed!\n");
-		parse_t_daemon_data_files();
-
-	}
-#endif
     }
 }
 
@@ -870,32 +815,6 @@ static void apply_qcom_rtc_offset(int on_start) {
 // started on recovery start or from menu
 static void apply_qcom_time_daemon_fixes(int on_start) {
     if (on_start) {
-#ifdef QCOM_RTC_FIX
-
-        // called on recovery start, no need to parse settings file when called from menus
-        char value[PROPERTY_VALUE_MAX];
-        read_config_file(PHILZ_SETTINGS_FILE, use_qcom_time_daemon.key, value, "0");
-        if (strcmp(value, "1") == 0) {
-            use_qcom_time_daemon.value = 1;
-	} else {
-            use_qcom_time_daemon.value = 0;
-	}
-
-	read_config_file(PHILZ_SETTINGS_FILE, use_qcom_time_offset.key, value, "1");
-	use_qcom_time_offset.value = strtol(value, NULL, 10);
-	if (use_qcom_time_offset.value < 0) {
-		use_qcom_time_offset.value = 0;
-	}
-
-	read_config_file(PHILZ_SETTINGS_FILE, use_qcom_time_data_files.key, value, "0");
-	if (strcmp(value, "1") == 0 || strcmp(value, "true") == 0) {
-		use_qcom_time_data_files.value = 1;
-	} else {
-		use_qcom_time_data_files.value = 0;
-	}
-
-#else
-
         // called on recovery start, no need to parse settings file when called from menus
         char value[PROPERTY_VALUE_MAX];
         read_config_file(PHILZ_SETTINGS_FILE, use_qcom_time_daemon.key, value, "0");
@@ -914,8 +833,6 @@ static void apply_qcom_time_daemon_fixes(int on_start) {
         use_qcom_time_offset.value = strtol(value, NULL, 10);
         if (use_qcom_time_offset.value < 0)
             use_qcom_time_offset.value = 0;
-
-#endif
     }
 
     // Only allow one qcom time_daemon fix (this should never happen unless user manually alters settings file)

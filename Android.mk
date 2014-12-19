@@ -1,12 +1,6 @@
+ifeq ($(call my-dir),$(call project-path-for,recovery))
+
 LOCAL_PATH := $(call my-dir)
-
-ifeq ($(RECOVERY_VARIANT),)
-ifeq ($(LOCAL_PATH),bootable/recovery)
-RECOVERY_VARIANT := philz
-endif
-endif
-
-ifeq ($(RECOVERY_VARIANT),philz)
 
 # philz touch gui: either prebuilt or from sources
 PHILZ_TOUCH_RECOVERY := true
@@ -77,7 +71,7 @@ endif
 # This should be the same line as upstream to not break makerecoveries.sh
 RECOVERY_VERSION := $(RECOVERY_NAME) v6.0.5.1
 
-PHILZ_BUILD := 6.58.7
+PHILZ_BUILD := 6.59.0
 CWM_BASE_VERSION := $(shell echo $(RECOVERY_VERSION) | cut -d ' ' -f 3)
 LOCAL_CFLAGS += -DCWM_BASE_VERSION="$(CWM_BASE_VERSION)"
 

@@ -55,6 +55,4 @@ int vibrate_device(int timeout_ms);
 // display and log the libtouch_gui version
 void print_libtouch_version(int onscreen);
 
-char new_find_file_in_path(char dir[PATH_MAX], char file[PATH_MAX]);
-
 #endif // __GUI_SETTINGS_H

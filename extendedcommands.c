@@ -4544,11 +4544,12 @@ void show_format_sdcard_menu(const char* path) {
 void show_advanced_power_menu() {
     const char* headers[] = { "Advanced power options", "", NULL };
 
-    char* list[] = { "Reboot Recovery",
-                     "Reboot to Bootloader",
-                     "Reboot to FlashMode",
-                     "Power Off",
-                     NULL };
+    char* list[] = {
+        "Reboot Recovery",
+        "Reboot to Bootloader",
+        "Power Off",
+        NULL
+    };
 
     char bootloader_mode[PROPERTY_VALUE_MAX];
 #ifdef BOOTLOADER_CMD_ARG
@@ -4571,10 +4572,6 @@ void show_advanced_power_menu() {
             reboot_main_system(ANDROID_RB_RESTART2, 0, bootloader_mode);
             break;
         case 2:
-            ui_print("Rebooting FlashMode...\n");
-            reboot_main_system(ANDROID_RB_RESTART2, 0, "oem-53");
-            break;
-        case 3:
             ui_print("Shutting down...\n");
             reboot_main_system(ANDROID_RB_POWEROFF, 0, 0);
             break;
@@ -4739,7 +4736,6 @@ int verify_root_and_recovery() {
 
     int ret = 0;
     struct stat st;
-#ifdef INSTALL_RECOVERY_CHECK
     // check to see if install-recovery.sh is going to clobber recovery
     // install-recovery.sh is also used to run the su daemon on stock rom for 4.3+
     // so verify that doesn't exist...
@@ -4755,7 +4751,6 @@ int verify_root_and_recovery() {
             }
         }
     }
-#endif
 
     // do not check permissions if system android version is 4.3+
     // in that case, no need to chmod 06755 as it could break root on +4.3 ROMs
